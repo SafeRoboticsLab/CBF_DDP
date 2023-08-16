@@ -8,8 +8,8 @@ from jaxlib.xla_extension import DeviceArray
 from functools import partial
 
 from .base_policy import BasePolicy
-from ..dynamics.base_dynamics import BaseDynamics
-from ..costs.base_margin import BaseMargin
+from simulators.dynamics.base_dynamics import BaseDynamics
+from simulators.costs.base_margin import BaseMargin
 
 class iLQR(BasePolicy):
 

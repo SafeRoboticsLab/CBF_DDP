@@ -1,10 +1,10 @@
 from __future__ import annotations
 import sys
-from typing import TypeVar, TypedDict, List, Any, Optional, Union, Tuple, Dict
+from typing import TypeVar, TypedDict, List, Optional, Union, Tuple, Dict
 import numpy as np
-from gym import spaces
 import pickle
 
+from gym import spaces
 
 def save_obj(obj, filename, protocol=None):
   if protocol is None:
@@ -38,15 +38,6 @@ class PrintLogger(object):
     # this handles the flush command by doing nothing.
     # you might want to specify some extra behavior here.
     pass
-
-
-def cast_numpy(x: np.ndarray | torch.Tensor) -> np.ndarray:
-  if torch.is_tensor(x):
-    x = x.cpu().numpy()
-  else:
-    assert isinstance(x, np.ndarray), "Invalid action type!"
-
-  return x
 
 
 # Type Hints

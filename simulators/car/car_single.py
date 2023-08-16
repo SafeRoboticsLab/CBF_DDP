@@ -7,7 +7,7 @@ from gym import spaces
 from jax import numpy as jnp
 
 from .bicycle5d_margin import BicycleReachAvoid5DMargin
-from ..base_single_env import BaseSingleEnv
+from simulators.base_single_env import BaseSingleEnv
 
 
 class CarSingle5DEnv(BaseSingleEnv):

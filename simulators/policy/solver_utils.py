@@ -2,7 +2,6 @@ import cvxpy as cp
 from cvxpy.error import SolverError
 import numpy as np
 
-import scipy
 import math
 
 import jax

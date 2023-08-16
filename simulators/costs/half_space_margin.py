@@ -22,7 +22,8 @@ class UpperHalfMargin(BaseMargin):
       self, state: DeviceArray, ctrl: DeviceArray
   ) -> DeviceArray:
     c = self.value - state[self.dim]
-    return c - self.buffer
+    c = c - self.buffer
+    return c
   
   @partial(jax.jit, static_argnames='self')
   def get_target_stage_margin(
@@ -46,7 +47,8 @@ class LowerHalfMargin(BaseMargin):
       self, state: DeviceArray, ctrl: DeviceArray
   ) -> DeviceArray:
     c = state[self.dim] - self.value
-    return c - self.buffer
+    c = c - self.buffer
+    return c
   
   @partial(jax.jit, static_argnames='self')
   def get_target_stage_margin(

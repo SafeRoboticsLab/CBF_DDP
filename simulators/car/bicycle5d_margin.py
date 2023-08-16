@@ -5,10 +5,10 @@ from jaxlib.xla_extension import DeviceArray
 import jax.numpy as jnp
 import jax
 
-from ..costs.base_margin import BaseMargin, SoftBarrierEnvelope
-from ..costs.obs_margin import CircleObsMargin
-from ..costs.quadratic_penalty import QuadraticControlCost
-from ..costs.half_space_margin import LowerHalfMargin, UpperHalfMargin
+from simulators.costs.base_margin import BaseMargin, SoftBarrierEnvelope
+from simulators.costs.obs_margin import CircleObsMargin
+from simulators.costs.quadratic_penalty import QuadraticControlCost
+from simulators.costs.half_space_margin import LowerHalfMargin, UpperHalfMargin
 
 class Bicycle5DCost(BaseMargin):
 

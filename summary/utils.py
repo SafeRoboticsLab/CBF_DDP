@@ -5,7 +5,6 @@ from matplotlib import cm
 import matplotlib
 import numpy as np
 
-import jax
 import os
 
 def find_jerk(controls):
@@ -17,7 +16,8 @@ def find_jerk(controls):
     std_y_jerk = np.std( y_jerk )
     return [mean_x_jerk, mean_y_jerk, std_x_jerk, std_y_jerk]
 
-def plot_run_summary(dyn_id, env, state_history, action_history, config_solver, fig_folder="./", **kwargs):
+def plot_run_summary(dyn_id, env, state_history, action_history, config_solver, config_agent, 
+                     fig_folder="./", **kwargs):
     c_obs = 'k'
     c_ego = 'c'
     
@@ -57,24 +57,33 @@ def plot_run_summary(dyn_id, env, state_history, action_history, config_solver, 
     fig.savefig(os.path.join(fig_folder, "final.png"), dpi=200)
     plt.close('all')
     
+    action_space = np.array(config_agent.ACTION_RANGE, dtype=np.float32)
+
     if dyn_id=="Bicycle5D":
       fig, axes = plt.subplots(
-        1, 3, figsize=(16.0, 2.5)
+        1, 3, figsize=(16.0, 3.4)
       )
       ax = axes[0]
       ax.plot(kwargs["value_history"])
       ax.set_xlabel("Timestep")
       ax.set_ylabel("Receding Value function")
-    
+      ax.set_xticks(ticks=[0, ctrls.shape[1]], labels=[0, ctrls.shape[1]], fontsize=8)
+
       ax = axes[1]
       ax.plot(ctrls[0, :])
       ax.set_xlabel("Timestep")
-      ax.set_ylabel("Acceleration control 1")
+      ax.set_ylabel("Acceleration control")
+      ax.set_xticks(ticks=[0, ctrls.shape[1]], labels=[0, ctrls.shape[1]], fontsize=8)
+      ax.set_yticks(ticks=[action_space[0, 0], action_space[0, 1]], 
+                    labels=[action_space[0, 0], action_space[0, 1]], fontsize=8)
 
       ax = axes[2]
       ax.plot(ctrls[1, :])
       ax.set_xlabel("Timestep")
-      ax.set_ylabel("Steering control 1")
+      ax.set_ylabel("Steering control")
+      ax.set_xticks(ticks=[0, ctrls.shape[1]], labels=[0, ctrls.shape[1]], fontsize=8)
+      ax.set_yticks(ticks=[action_space[1, 0], action_space[1, 1]], 
+                    labels=[action_space[1, 0], action_space[1, 1]], fontsize=8)
 
       fig.savefig(os.path.join(fig_folder, "auxiliary_controls.png"), dpi=200)
 
@@ -106,7 +115,8 @@ def plot_run_summary(dyn_id, env, state_history, action_history, config_solver, 
     #plt.xlabel('Time step')
     #fig.savefig(os.path.join(fig_folder, "auxiliary_cbfiters.png"), dpi=200)
 
-def make_animation_plots(env, state_history, solver_info, safety_plan, config_solver, fig_prog_folder="./"):
+def make_animation_plots(env, state_history, solver_info, safety_plan, config_solver, 
+                         fig_prog_folder="./"):
     fig, ax = plt.subplots(
         1, 1, figsize=(config_solver.FIG_SIZE_X, config_solver.FIG_SIZE_Y)
     )
@@ -148,21 +158,27 @@ def make_animation_plots(env, state_history, solver_info, safety_plan, config_so
     sc = ax.scatter(
         states[0, :-1], states[1, :-1], s=24, c=c_trace, marker='o'
     )
-    ax.legend(fontsize=6, loc='upper left', bbox_to_anchor=(-0.05, 1.14), fancybox=True)    
+    ax.legend(fontsize=8, loc='upper left', bbox_to_anchor=(0.05, 1.18), fancybox=False)
+    
+    ax.set_xticks(ticks=[0, env.visual_extent[1]], labels=[0, env.visual_extent[1]], fontsize=8)
+    ax.set_yticks(ticks=[env.visual_extent[2], env.visual_extent[3]], 
+                  labels=[env.visual_extent[2], env.visual_extent[3]], fontsize=8)
+    
     fig.savefig(
         os.path.join(fig_prog_folder,
                      str(states.shape[1] - 1) + ".png"), dpi=200
     )
     plt.close('all')
 
-def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./plots_paper/", tag="reachavoid", road_boundary=1.2):
+def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./plots_paper/", 
+                    tag="reachavoid", road_boundary=1.2):
     if not os.path.exists(plot_folder):
         os.makedirs(plot_folder)
 
     matplotlib.rc('xtick', labelsize=10) 
     matplotlib.rc('ytick', labelsize=10) 
 
-    hide_label = True
+    hide_label = False
 
     legend_fontsize = 8
     road_bounds = [road_boundary]
@@ -185,13 +201,16 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
         for rb in road_bounds:
             for yindx, yc in enumerate(yaw_consts):
                 if yc is not None:
-                    suffixlist.append(os.path.join("road_boundary=" + str(rb) + ", yaw="+str(round(yc, 2)), sh))
+                    suffixlist.append(os.path.join("road_boundary=" + str(rb) + ", yaw="+
+                                                   str(round(yc, 2)), sh))
                     if not hide_label:
-                        labellist.append(sh+"-DDP $\delta \\theta \leq$"+str(label_yc[yindx])+"$\pi$")
+                        labellist.append(sh+"-DDP $\delta \\theta \leq$"+
+                                         str(label_yc[yindx])+"$\pi$")
                     else:
                         labellist.append("                          ")
                 else:
-                    suffixlist.append(os.path.join("road_boundary=" + str(rb) + ", yaw="+str(yc), sh))
+                    suffixlist.append(os.path.join("road_boundary=" + str(rb) + ", yaw="+
+                                                   str(yc), sh))
                     if not hide_label:
                         labellist.append(sh+"-DDP No $\delta \\theta$")
                     else:
@@ -282,23 +301,36 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 if len(complete_filter_indices)>0:
                     if lgd_c:
                         if not hide_label:
-                            ax.plot(state_data[complete_filter_indices, 0], state_data[complete_filter_indices, 1], 'o', color=colorlist[int(idx)], alpha=0.7, markersize=5.0, label='Complete filter')
+                            ax.plot(state_data[complete_filter_indices, 0], 
+                                    state_data[complete_filter_indices, 1], 'o', 
+                                    color=colorlist[int(idx)], alpha=0.7, markersize=5.0, 
+                                    label='Complete filter')
                         else:
-                            ax.plot(state_data[complete_filter_indices, 0], state_data[complete_filter_indices, 1], 'o', color=colorlist[int(idx)], alpha=0.7, markersize=5.0, label='                ')
+                            ax.plot(state_data[complete_filter_indices, 0], 
+                            state_data[complete_filter_indices, 1], 'o', 
+                            color=colorlist[int(idx)], alpha=0.7, markersize=5.0, label='                ')
                         lgd_c = False
                     else:
-                        ax.plot(state_data[complete_filter_indices, 0], state_data[complete_filter_indices, 1], 'o', color=colorlist[int(idx)], alpha=0.7, markersize=5.0)
+                        ax.plot(state_data[complete_filter_indices, 0], 
+                                state_data[complete_filter_indices, 1], 'o', 
+                                color=colorlist[int(idx)], alpha=0.7, markersize=5.0)
                 if len(barrier_filter_indices)>0:
                     if lgd_b:
                         if not hide_label:
-                            ax.plot(state_data[barrier_filter_indices, 0], state_data[barrier_filter_indices, 1], 'x', color=colorlist[int(idx)], alpha=0.7, markersize=5.0, label='CBF filter')
+                            ax.plot(state_data[barrier_filter_indices, 0], 
+                                    state_data[barrier_filter_indices, 1], 'x', 
+                                    color=colorlist[int(idx)], alpha=0.7, markersize=5.0, 
+                                    label='CBF filter')
                         else:
-                            ax.plot(state_data[barrier_filter_indices, 0], state_data[barrier_filter_indices, 1], 'x', color=colorlist[int(idx)], alpha=0.7, markersize=5.0, label='            ')
+                            ax.plot(state_data[barrier_filter_indices, 0], 
+                                    state_data[barrier_filter_indices, 1], 'x', 
+                                    color=colorlist[int(idx)], alpha=0.7, markersize=5.0, label='            ')
                         lgd_b = False
                     else:
                         ax.plot(state_data[barrier_filter_indices, 0], state_data[barrier_filter_indices, 1], 'x', color=colorlist[int(idx)], alpha=0.7, markersize=5.0)
     
-            ax.legend(framealpha=0, fontsize=legend_fontsize, loc='upper left', ncol=4, bbox_to_anchor=(0.0, 1.35), fancybox=False, shadow=False)
+            ax.legend(framealpha=0, fontsize=legend_fontsize, loc='upper left', 
+                      ncol=4, bbox_to_anchor=(0.0, 1.35), fancybox=False, shadow=False)
 
             
             if hide_label:
@@ -306,8 +338,11 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 fra.axes.xaxis.set_ticklabels([])
                 fra.axes.yaxis.set_ticklabels([])
             else:
-                ax.set_xticks(ticks=[0, env.visual_extent[1]], labels=[0, env.visual_extent[1]], fontsize=legend_fontsize)
-                ax.set_yticks(ticks=[env.visual_extent[2], env.visual_extent[3]], labels=[env.visual_extent[2], env.visual_extent[3]], fontsize=legend_fontsize)
+                ax.set_xticks(ticks=[0, env.visual_extent[1]], labels=[0, env.visual_extent[1]], 
+                              fontsize=legend_fontsize)
+                ax.set_yticks(ticks=[env.visual_extent[2], env.visual_extent[3]], 
+                              labels=[env.visual_extent[2], env.visual_extent[3]], 
+                              fontsize=legend_fontsize)
 
             ax.plot(np.linspace(0, env.visual_extent[1], 100), np.array([rblist[idx]]*100), 'k--')
             ax.plot(np.linspace(0, env.visual_extent[1], 100), np.array([-1*rblist[idx]]*100), 'k--')
@@ -319,10 +354,12 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
 
 
         fig.savefig(
-            plot_folder + tag + str(hide_label) + "_jax_trajectories.pdf", dpi=200,bbox_inches='tight', transparent=hide_label
+            plot_folder + tag + str(hide_label) + "_jax_trajectories.pdf", dpi=200,
+            bbox_inches='tight', transparent=hide_label
         )
         fig.savefig(
-            plot_folder + tag + str(hide_label) + "_jax_trajectories.png", dpi=200,bbox_inches='tight', transparent=hide_label
+            plot_folder + tag + str(hide_label) + "_jax_trajectories.png", dpi=200,
+            bbox_inches='tight', transparent=hide_label
         )
 
         fig, axes = plt.subplots(2, 1, figsize=(5.2, 2.9))
@@ -334,18 +371,25 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 maxsteps = np.maximum(maxsteps, nsteps)
                 fillarray = np.zeros(nsteps)
                 fillarray[np.array(plot_states_barrier_filter_list[idx], dtype=np.int64)] = 1
-                axes[0].plot(controls_data[:, 0], label=labellist[int(idx)], c=colorlist[int(idx)], alpha = 1.0, linewidth=1.5, linestyle='solid')
-                axes[1].plot(controls_data[:, 1], label=labellist[int(idx)], c=colorlist[int(idx)], alpha = 1.0, linewidth=1.5, linestyle='solid')
-                axes[0].fill_between(range(nsteps), action_space[0, 0], action_space[0, 1], where=fillarray, color='b', alpha=0.3)
-                axes[1].fill_between(range(nsteps), action_space[1, 0], action_space[1, 1], where=fillarray, color='b', alpha=0.3)
+                axes[0].plot(controls_data[:, 0], label=labellist[int(idx)], c=colorlist[int(idx)], 
+                             alpha = 1.0, linewidth=1.5, linestyle='solid')
+                axes[1].plot(controls_data[:, 1], label=labellist[int(idx)], c=colorlist[int(idx)], 
+                             alpha = 1.0, linewidth=1.5, linestyle='solid')
+                axes[0].fill_between(range(nsteps), action_space[0, 0], action_space[0, 1], 
+                                     where=fillarray, color='b', alpha=0.3)
+                axes[1].fill_between(range(nsteps), action_space[1, 0], action_space[1, 1], 
+                                     where=fillarray, color='b', alpha=0.3)
 
             if not hide_label:
                 #axes[0].set_xlabel('Time index', fontsize=legend_fontsize)
                 axes[0].set_ylabel('Acceleration', fontsize=legend_fontsize)
             #axes[0].grid(True)
             axes[0].set_xticks(ticks=[], labels=[], fontsize=5, labelsize=5)
-            axes[0].set_yticks(ticks=[action_space[0, 0], action_space[0, 1]], labels=[action_space[0, 0], action_space[0, 1]], fontsize=legend_fontsize)
-            axes[0].legend(framealpha=0, fontsize=legend_fontsize, loc='upper left', ncol=3, bbox_to_anchor=(-0.05, 1.4), fancybox=False, shadow=False)
+            axes[0].set_yticks(ticks=[action_space[0, 0], action_space[0, 1]], 
+                               labels=[action_space[0, 0], action_space[0, 1]], 
+                               fontsize=legend_fontsize)
+            axes[0].legend(framealpha=0, fontsize=legend_fontsize, loc='upper left', 
+                           ncol=3, bbox_to_anchor=(-0.05, 1.4), fancybox=False, shadow=False)
             axes[0].yaxis.set_label_coords(-0.04, 0.5)
 
             if hide_label:
@@ -353,11 +397,13 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 axes[0].set_yticklabels([])
 
             if not hide_label:
-                #axes[1].set_xlabel('Time index', fontsize=legend_fontsize)
+                axes[1].set_xlabel('Time index', fontsize=legend_fontsize)
                 axes[1].set_ylabel('Steer control', fontsize=legend_fontsize)
             #axes[1].grid(True)
             axes[1].set_xticks(ticks=[0, maxsteps], labels=[0, maxsteps], fontsize=legend_fontsize)
-            axes[1].set_yticks(ticks=[action_space[1, 0], action_space[1, 1]], labels=[action_space[1, 0], action_space[1, 1]], fontsize=legend_fontsize)
+            axes[1].set_yticks(ticks=[action_space[1, 0], action_space[1, 1]], 
+                               labels=[action_space[1, 0], action_space[1, 1]], 
+                               fontsize=legend_fontsize)
             #axes[1].legend(fontsize=legend_fontsize)
             axes[1].yaxis.set_label_coords(-0.04, 0.5)
             axes[1].xaxis.set_label_coords(0.5, -0.04)
@@ -366,10 +412,12 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 axes[1].set_yticklabels([])
 
         fig.savefig(
-            plot_folder + tag + str(hide_label) + "_jax_controls.pdf", dpi=200, bbox_inches='tight', transparent=hide_label
+            plot_folder + tag + str(hide_label) + "_jax_controls.pdf", dpi=200, 
+            bbox_inches='tight', transparent=hide_label
         )
         fig.savefig(
-            plot_folder + tag + str(hide_label) + "_jax_controls.png", dpi=200, bbox_inches='tight', transparent=hide_label
+            plot_folder + tag + str(hide_label) + "_jax_controls.png", dpi=200, 
+            bbox_inches='tight', transparent=hide_label
         )
 
 
@@ -381,4 +429,4 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
         print("Acceleration jerk: ", jerklist[0], " +- ", jerklist[2])
         print("Steer jerk: ", jerklist[1], " +- ", jerklist[3])
         print("Total deviation: ", np.sum(plot_deviations_list[idx]))
-        print("Process time: ", np.mean(timelist), "+-", np.std(timelist))
+        print("Process time: ", np.mean(timelist), " +- ", np.std(timelist))

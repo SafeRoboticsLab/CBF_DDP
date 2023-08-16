@@ -5,14 +5,10 @@ sys.path.append(".")
 
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import cm
 import imageio
-from IPython.display import Image
 import argparse
 from shutil import copyfile
 import jax
-#print(jax.devices())
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = " "
 
@@ -80,8 +76,6 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
   )
   max_iter_receding = config_solver.MAX_ITER_RECEDING
 
-  # endregion
-
   # region: Runs iLQR
   # Warms up jit
   env.agent.policy.get_action(obs=x_cur, state=x_cur, warmup=True)
@@ -94,7 +88,8 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
   ):
     solver_info = plan_history[-1]
     states = np.array(state_history).T  # last one is the next state.
-    make_animation_plots(env, state_history, solver_info, kwargs['safety_plan'], config_solver, fig_prog_folder)
+    make_animation_plots(env, state_history, solver_info, kwargs['safety_plan'], config_solver, 
+                         fig_prog_folder)
 
     if config_solver.FILTER_TYPE == "none":
       print(
@@ -114,7 +109,7 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
   def rollout_episode_callback(
       env, state_history, action_history, plan_history, step_history, *args, **kwargs
   ):
-    plot_run_summary(dyn_id, env, state_history, action_history, config_solver, fig_folder, **kwargs)
+    plot_run_summary(dyn_id, env, state_history, action_history, config_solver, config_agent, fig_folder, **kwargs)
     save_dict = {'states': state_history, 'actions': action_history, "values": kwargs["value_history"], "process_times": kwargs["process_time_history"]
                  , "barrier_indices": kwargs["barrier_filter_indices"], "complete_indices": kwargs["complete_filter_indices"], 'deviation_history': kwargs['deviation_history']}
     np.save(os.path.join(fig_folder, "save_data.npy"), save_dict)
@@ -141,9 +136,13 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
         print("Filter type", filter_type)
         config_solver.FILTER_TYPE= filter_type
         if yaw_constraint is not None:
-          current_out_folder = os.path.join(out_folder, "road_boundary=" + str(road_boundary)+", yaw=" + str(round(yaw_constraint,2)))
+          current_out_folder = os.path.join(out_folder, "road_boundary=" + str(road_boundary)+
+                                            ", yaw=" + 
+                                            str(round(yaw_constraint, 2)))
         else:
-          current_out_folder = os.path.join(out_folder, "road_boundary=" + str(road_boundary)+", yaw=" + str(yaw_constraint))
+          current_out_folder = os.path.join(out_folder, "road_boundary=" + str(road_boundary)+
+                                            ", yaw=" + 
+                                            str(yaw_constraint))
         current_out_folder = os.path.join(current_out_folder, filter_type)
         config_solver.OUT_FOLDER = current_out_folder
         fig_folder = os.path.join(current_out_folder, "figure")
@@ -201,17 +200,18 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
             writer.append_data(image)
             #Image(open(gif_path, 'rb').read(), width=400)
         # endregion
+  
   make_yaw_report(out_folder, plot_folder='./plots_paper/', tag=plot_tag, road_boundary=road_boundary)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      "-cf", "--config_file", help="config file path", type=str,
+      "-cf", "--config_file", help="Config file path", type=str,
       default=os.path.join("./simulators/test_config_yamls", "test_config.yaml")
   )
 
   parser.add_argument(
-      "-pt", "--plot_tag", help="save final plots", type=str,
+      "-pt", "--plot_tag", help="Save final plots", type=str,
       default=os.path.join("reachavoid")
   )
 
