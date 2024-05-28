@@ -7,8 +7,8 @@ import imageio
 from IPython.display import Image
 
 def plot_dubins_trajectory(fig, ax, solver_dicts, obstacle_list=None, obstacle_radius=0,
-                        value_plot=False, convergence_plot=False, show_label=True, flipped=False, xlimits=[-3.5, 2.0], ylimits=[-0.2, 3.5], ego_radius=0.1, road_boundary=[-1.0, 1.0], marginFunc=None, show_legend=True
-                        ,legend_fontsize=8, label_size=9):
+                        show_label=True, xlimits=[-3.5, 2.0], ylimits=[-0.2, 3.5], marginFunc=None, show_legend=True
+                        , ego_radius=0.1, legend_fontsize=8):
     colors = {}
     colors['color0'] = 'r'
     colors['color1'] = 'm'
@@ -34,11 +34,8 @@ def plot_dubins_trajectory(fig, ax, solver_dicts, obstacle_list=None, obstacle_r
         nx, ny = (1000, 100)
         xvals= np.linspace(xlimits[0], xlimits[1], nx)
         yvals = np.linspace(ylimits[0], ylimits[1], ny)
-        xvec, yvec = np.meshgrid(xvals, yvals)
         cxy = np.zeros((nx, ny))
-        indexxy = np.zeros((nx, ny))
 
-        diffindexxy = np.ones((nx, ny))
         for x in xvals:
             iy = 0
             for y in yvals:
@@ -53,11 +50,9 @@ def plot_dubins_trajectory(fig, ax, solver_dicts, obstacle_list=None, obstacle_r
               cxy.T, interpolation='none', extent=[xlimits[0],xlimits[1], ylimits[0], ylimits[1]],
               origin="lower", cmap='viridis', vmin=cxy.min(), vmax=cxy.max(), zorder=-1, alpha=0.3
             )
-        #cbar = fig.colorbar(sc0, ax=ax, orientation="horizontal", fraction=0.05, aspect=30)
-        #cbar.ax.tick_params(labelsize=label_size)
     
 
-    for idx, solver_dict in enumerate(solver_dicts):
+    for _, solver_dict in enumerate(solver_dicts):
         dict_id = solver_dict['id']
         if solver_dict['task_active']:
             if show_label:
@@ -77,7 +72,7 @@ def plot_dubins_trajectory(fig, ax, solver_dicts, obstacle_list=None, obstacle_r
             #plt.plot(solver_dict['states'][barrier_shield_indices, 0], solver_dict['states'][barrier_shield_indices, 1], 'ko')
 
     task_active = True
-    for idx, solver_dict in enumerate(solver_dicts):
+    for _, solver_dict in enumerate(solver_dicts):
         if solver_dict['previous_trace'] is not None:
             dict_id = solver_dict['trace_id']
             ax.plot(solver_dict['previous_trace'][:, 0], solver_dict['previous_trace'][:, 1], label=solver_dict['trace_label'], linestyle='solid', linewidth=2, color=colors[dict_id])
@@ -90,10 +85,10 @@ def plot_dubins_trajectory(fig, ax, solver_dicts, obstacle_list=None, obstacle_r
                 ax.plot(solver_dict['task_trace'][:, 0], solver_dict['task_trace'][:, 1], label='Task policy plan ', linestyle='solid', linewidth=1.0, color='c')
 
     if task_active:
-        circle_ego = plt.Circle(solver_dict['states'][0, 0:2], 0.15, color='c', alpha=0.8)
+        circle_ego = plt.Circle(solver_dict['states'][0, 0:2], ego_radius, color='c', alpha=0.8)
         ax.add_patch(circle_ego)
     else:
-        circle_ego = plt.Circle(solver_dict['states'][0, 0:2], 0.15, color='k', alpha=0.8)
+        circle_ego = plt.Circle(solver_dict['states'][0, 0:2], ego_radius, color='k', alpha=0.8)
         ax.add_patch(circle_ego)
 
     for indx, obstacle in enumerate(obstacle_list):
@@ -102,17 +97,13 @@ def plot_dubins_trajectory(fig, ax, solver_dicts, obstacle_list=None, obstacle_r
     
     circle_goal = plt.Circle([1.5, 1.5], 0.15, color='g', alpha=0.6)
     ax.add_patch(circle_goal)
-    
-    #ax.set_xlim(xlimits)
-    #ax.set_ylim(ylimits)
-    #ymin, ymax = ax.get_ylim()
-    #xmin, xmax = ax.get_xlim()
 
     if show_legend:
         ax.legend(fontsize=legend_fontsize, loc='upper left')
 
 def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix="safety", save_folder="./dubins_plots/",  
-                        value_plot=False, convergence_plot=False, flipped=False, xlimits=[-3.7, 3.0], ylimits=[-0.4, 3.5], ego_radius=0.1, road_boundary=[-1.0, 1.0], costFunc=None, animate=False):
+                        value_plot=False, convergence_plot=False, xlimits=[-3.7, 3.0], ylimits=[-0.4, 3.5], 
+                        ego_radius=0.1, animate=False):
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
     
@@ -145,16 +136,17 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
         ax = plt.axes()
         label_size = 7
         legend_fontsize = 6
-        plot_dubins_trajectory(fig1, ax, solver_dicts, obstacle_list, obstacle_radius,
-                        value_plot, convergence_plot, flipped, xlimits, ylimits, ego_radius, road_boundary, costFunc, legend_fontsize=legend_fontsize, label_size=label_size)
+        plot_dubins_trajectory(fig1, ax, solver_dicts, obstacle_list=obstacle_list, obstacle_radius=obstacle_radius, ego_radius=ego_radius,
+                         xlimits=xlimits, ylimits=ylimits,
+                        legend_fontsize=legend_fontsize)
     else:
         fig1 = plt.figure(figsize=(3.0, 3.0), dpi=100)
         ax = plt.axes()
         label_size = 8
         legend_fontsize = 6
-        plot_dubins_trajectory(fig1, ax, solver_dicts, obstacle_list, obstacle_radius,
-                        value_plot, convergence_plot, flipped, xlimits, ylimits, ego_radius, road_boundary, costFunc, legend_fontsize=legend_fontsize, label_size=label_size)
-
+        plot_dubins_trajectory(fig1, ax, solver_dicts, obstacle_list=obstacle_list, obstacle_radius=obstacle_radius, ego_radius=ego_radius,
+                         xlimits=xlimits, ylimits=ylimits,
+                        legend_fontsize=legend_fontsize)
 
     ax.set_yticks(ticks=np.array([-0.2, 1.0, 3.2]), labels=np.array([-0.2, 1.0, 3.2]), fontsize=label_size)
     ax.set_xticks(ticks=np.array([-3.5, 0.0, 2.0]), labels=np.array([-3.5, 0.0, 2.0]), fontsize=label_size)
@@ -167,7 +159,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
 
     plt.figure(figsize=(18, 12), dpi=200)
     plt.subplot(2, 3, 1)
-    for idx, solver_dict in enumerate(solver_dicts):
+    for _, solver_dict in enumerate(solver_dicts):
         dict_id = solver_dict['id']
         nsteps = solver_dict['run_steps']
         plt.plot(solver_dict['states'][0:nsteps, 0], label=solver_dict['label'], linestyle=styles[dict_id], linewidth=2, color=colors[dict_id])
@@ -175,7 +167,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
     plt.grid()
     plt.legend(fontsize=legend_fontsize)
     plt.subplot(2, 3, 2)
-    for idx, solver_dict in enumerate(solver_dicts):
+    for _, solver_dict in enumerate(solver_dicts):
         dict_id = solver_dict['id']
         nsteps = solver_dict['run_steps']
         plt.plot(solver_dict['states'][0:nsteps, 1], label=solver_dict['label'], linestyle=styles[dict_id], linewidth=2, color=colors[dict_id])
@@ -183,7 +175,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
     plt.grid()
     plt.legend(fontsize=legend_fontsize)
     plt.subplot(2, 3, 3)
-    for idx, solver_dict in enumerate(solver_dicts):
+    for _, solver_dict in enumerate(solver_dicts):
         dict_id = solver_dict['id']
         nsteps = solver_dict['run_steps']
         plt.plot(solver_dict['states'][0:nsteps, 2], label=solver_dict['label'], linestyle=styles[dict_id], linewidth=2, color=colors[dict_id])
@@ -191,13 +183,11 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
     plt.grid()
     plt.legend(fontsize=legend_fontsize)
 
-    msize = 3.0
-    fstyle = 'full'
     plt.figure(figsize=(1.7, 1.45), dpi=100)
     ax = plt.gca()
     legend_fontsize=6
     label_size = 7
-    for idx, solver_dict in enumerate(solver_dicts):
+    for _, solver_dict in enumerate(solver_dicts):
         dict_id = solver_dict['id']
         nsteps = solver_dict['run_steps']
         plt.plot(solver_dict['controls_deviation'][0:nsteps, 0], label=solver_dict['label'], linestyle=styles[dict_id], linewidth=1.0, color=colors[dict_id])
@@ -215,7 +205,6 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
     if value_plot:
         fig = plt.figure(figsize=( 3.5, 2.3 ))
         ax = plt.gca()
-        print(ax)
         legend_fontsize=8
         for idx, solver_dict in enumerate(solver_dicts):
             dict_id = solver_dict['id']
@@ -238,7 +227,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
         plt.savefig(save_folder+save_prefix+"_values.png",bbox_inches='tight')
 
         plt.figure(figsize=( 12, 7 ))
-        for idx, solver_dict in enumerate(solver_dicts):
+        for _, solver_dict in enumerate(solver_dicts):
             dict_id = solver_dict['id']
             nsteps = solver_dict['run_steps']
             if solver_dict['types'] is not None:
@@ -253,7 +242,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
         plt.savefig(save_folder+save_prefix+"_shields.png")
 
         plt.figure(figsize=( 12, 7 ))
-        for idx, solver_dict in enumerate(solver_dicts):
+        for _, solver_dict in enumerate(solver_dicts):
             dict_id = solver_dict['id']
             nsteps = solver_dict['run_steps']
             if dict_id=='Barrier':
@@ -267,7 +256,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
         plt.savefig(save_folder+save_prefix+"_margins.png")
 
         plt.figure(figsize=( 12, 7 ))
-        for idx, solver_dict in enumerate(solver_dicts):
+        for _, solver_dict in enumerate(solver_dicts):
             dict_id = solver_dict['id']
             nsteps = solver_dict['run_steps']
             if dict_id=='Barrier':
@@ -281,7 +270,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
         plt.savefig(save_folder+save_prefix+"_entries.png")
 
         plt.figure(figsize=( 12, 7 ))
-        for idx, solver_dict in enumerate(solver_dicts):
+        for _, solver_dict in enumerate(solver_dicts):
             dict_id = solver_dict['id']
             nsteps = solver_dict['run_steps']
             plt.plot(solver_dict['process_times'][0:nsteps], label=solver_dict['label'], linestyle=styles[dict_id], linewidth=2, color=colors[dict_id])
@@ -296,7 +285,7 @@ def helper_plot(solver_dicts, obstacle_list=None, obstacle_radius=0, save_prefix
 
     if convergence_plot:
         plt.figure(figsize=( 7, 7 ))
-        for idx, solver_dict in enumerate(solver_dicts):
+        for _, solver_dict in enumerate(solver_dicts):
             dict_id = solver_dict['id']
             nsteps = solver_dict['run_steps']
             plt.plot(solver_dict['convergence'][0:nsteps], label=solver_dict['label'], linestyle=styles[dict_id], linewidth=2, color=colors[dict_id])

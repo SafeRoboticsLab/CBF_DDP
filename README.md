@@ -1,5 +1,6 @@
 # Fast, Smooth and Safe - LCSS + CDC submission
 
+For the license, please use https://github.com/SafeRoboticsLab/CBF_DDP 
 ## Introduction
 This code is the companion to results in https://sites.google.com/view/fsslcss/home .
 Here, we construct a CBF up to second-order in real-time using DDP optimization. Then, the online quadratic program is solved to obtain the filtered safety control. Without interfering constraints, the filtered controls display better smoothness properties. With multiple interfering constraints from yaw and road boundaries, controls are jerkier but behavior of trajectories is safer and smoother. We use JAX to obtain acceleration while running on a CPU.
@@ -60,5 +61,7 @@ python test_yaw_constraints.py -cf ./test_configs/reachavoid/test_config_cbf_rea
 python test_yaw_constraints.py -cf ./test_configs/reachavoid/test_config_cbf_reachavoid_circle_config2.yaml -pt reachavoidcf2_lqr_task_squeeze -rb 1.0
 ```
 
+## Acknowledgements
 
+This code is based upon the previous codebase of Safe Robotics Lab in Princeton ( https://saferobotics.princeton.edu/ )
 

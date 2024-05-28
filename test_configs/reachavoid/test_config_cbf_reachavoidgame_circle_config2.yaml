@@ -2,7 +2,7 @@ environment:
   SEED: 0
   NUM_AGENTS: 1
   # TRACK
-  TRACK_LEN: 10
+  TRACK_LEN: 12
   # LOOP: true
   TIMEOUT: 100
   # DONE FLAG PARAM
@@ -10,12 +10,9 @@ environment:
   G_X_FAIL: 0.0
   OBSC_TYPE: circle
   OBS_SPEC:
-    - [2.5, 0.0, 0.25]
-    - [4.5, 0.0, 0.25]
+    - [1.5, 0.4, 0.35]
+    - [4.5, -0.4, 0.35]
     - [6.5, 0.0, 0.25]
-    - [8.5, 0.7, 0.25]
-    - [8.5, -0.7, 0.25]
-  #  - [11.0, 0.1, 0.35]
   RESET_SPACE:
     - [0., 8.0]
     - [-0.4, 0.4]
@@ -49,17 +46,22 @@ cost:
   # SAFETY COST PARAM
   W_ACCEL: 0.00001
   W_OMEGA: 0.00001
+  D_X: 0.01
+  D_Y: 0.01
   YAW_MIN: -1.57
   YAW_MAX: 1.57
 
 agent:
   AGENT_ID: ego
-  DYN: Bicycle5D
+  DYN: Bicycle5DGame
   FOOTPRINT: Circle
   EGO_RADIUS: 0.1
   ACTION_RANGE:
     - [-0.5, 0.5]
     - [-1.0, 1.0]
+  DISTURBANCE_RANGE:
+    - [-0.1, 0.1]
+    - [-0.1, 0.1]
   WEIGHT : 2.99  # kg
   # CAR DYNAMICS
   WHEELBASE: 0.2
@@ -72,17 +74,17 @@ agent:
 
 solver:
   INIT_STATE: [0.0, 0.0, 0.6, 0.0, 0.0]
-  N: 45
+  N: 50
   MAX_ITER: 20
   MAX_ITER_RECEDING: 360
   # Line search options: 'baseline'.
   LINE_SEARCH: 'baseline'
   # Shielding options: 'none', 'LR', 'CBF'
   FILTER_TYPE: 'CBF'
-  CBF_TYPE: 'quadratic'
+  CBF_TYPE: 'linear'
   BARRIER_GAMMA: 0.9
   LR_THRESHOLD: 0.0
-  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config1/
+  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config2_game/
   DEVICE: cpu
   FIG_SIZE_X: 8
   FIG_SIZE_Y: 2.5

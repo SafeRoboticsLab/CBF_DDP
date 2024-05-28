@@ -7,9 +7,11 @@ import numpy as np
 
 import os
 
-def find_jerk(controls):
+def find_jerk(controls, time_delta):
     x_jerk = np.abs(controls[1:, 0] - controls[0:-1, 0])
     y_jerk = np.abs(controls[1:, 1] - controls[0:-1, 1])
+    #x_jerk = np.divide(x_jerk, time_delta)
+    #y_jerk = np.divide(y_jerk, time_delta)
     mean_x_jerk = np.mean( x_jerk )
     mean_y_jerk = np.mean( y_jerk )
     std_x_jerk = np.std( x_jerk )
@@ -171,7 +173,7 @@ def make_animation_plots(env, state_history, solver_info, safety_plan, config_so
     plt.close('all')
 
 def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./plots_paper/", 
-                    tag="reachavoid", road_boundary=1.2):
+                    tag="reachavoid", road_boundary=1.2, dt=0.05):
     if not os.path.exists(plot_folder):
         os.makedirs(plot_folder)
 
@@ -220,7 +222,7 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 rblist.append(rb)
 
                 if sh=='LR' and yc is None:
-                    showlist.append(False)
+                    showlist.append(True)
                 else:
                     showlist.append(True)                
             
@@ -330,7 +332,7 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                         ax.plot(state_data[barrier_filter_indices, 0], state_data[barrier_filter_indices, 1], 'x', color=colorlist[int(idx)], alpha=0.7, markersize=5.0)
     
             ax.legend(framealpha=0, fontsize=legend_fontsize, loc='upper left', 
-                      ncol=4, bbox_to_anchor=(0.0, 1.35), fancybox=False, shadow=False)
+                      ncol=3, bbox_to_anchor=(0.0, 1.35), fancybox=False, shadow=False)
 
             
             if hide_label:
@@ -369,16 +371,17 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
             if showcontrollist[idx]:
                 nsteps = controls_data.shape[0]
                 maxsteps = np.maximum(maxsteps, nsteps)
-                fillarray = np.zeros(nsteps)
+                x_times = dt*np.arange(nsteps)
+                fillarray = np.zeros(maxsteps)
                 fillarray[np.array(plot_states_barrier_filter_list[idx], dtype=np.int64)] = 1
-                axes[0].plot(controls_data[:, 0], label=labellist[int(idx)], c=colorlist[int(idx)], 
+                axes[0].plot(x_times, controls_data[:, 0], label=labellist[int(idx)], c=colorlist[int(idx)], 
                              alpha = 1.0, linewidth=1.5, linestyle='solid')
-                axes[1].plot(controls_data[:, 1], label=labellist[int(idx)], c=colorlist[int(idx)], 
+                axes[1].plot(x_times, controls_data[:, 1], label=labellist[int(idx)], c=colorlist[int(idx)], 
                              alpha = 1.0, linewidth=1.5, linestyle='solid')
-                axes[0].fill_between(range(nsteps), action_space[0, 0], action_space[0, 1], 
-                                     where=fillarray, color='b', alpha=0.3)
-                axes[1].fill_between(range(nsteps), action_space[1, 0], action_space[1, 1], 
-                                     where=fillarray, color='b', alpha=0.3)
+                axes[0].fill_between(x_times, action_space[0, 0], action_space[0, 1], 
+                                     where=fillarray[0:nsteps], color='b', alpha=0.3)
+                axes[1].fill_between(x_times, action_space[1, 0], action_space[1, 1], 
+                                     where=fillarray[0:nsteps], color='b', alpha=0.3)
 
             if not hide_label:
                 #axes[0].set_xlabel('Time index', fontsize=legend_fontsize)
@@ -397,10 +400,10 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
                 axes[0].set_yticklabels([])
 
             if not hide_label:
-                axes[1].set_xlabel('Time index', fontsize=legend_fontsize)
+                axes[1].set_xlabel('Time (s)', fontsize=legend_fontsize)
                 axes[1].set_ylabel('Steer control', fontsize=legend_fontsize)
             #axes[1].grid(True)
-            axes[1].set_xticks(ticks=[0, maxsteps], labels=[0, maxsteps], fontsize=legend_fontsize)
+            axes[1].set_xticks(ticks=[0, round(dt*maxsteps, 2)], labels=[0, round(dt*maxsteps, 2)], fontsize=legend_fontsize)
             axes[1].set_yticks(ticks=[action_space[1, 0], action_space[1, 1]], 
                                labels=[action_space[1, 0], action_space[1, 1]], 
                                fontsize=legend_fontsize)
@@ -420,11 +423,47 @@ def make_yaw_report(prefix="./exps_may/ilqr/bic5D/yaw_testing/", plot_folder="./
             bbox_inches='tight', transparent=hide_label
         )
 
+    fig_v = plt.figure(figsize=(3.2, 2.5))
+    ax_v = plt.gca()
+
+    for idx, values_data in enumerate(plot_values_list):
+        if showcontrollist[idx]:
+            x_times = dt*np.arange(values_data.size)
+            ax_v.plot(x_times, values_data, label=labellist[int(idx)], c=colorlist[int(idx)], 
+                             alpha = 1.0, linewidth=1.5, linestyle='solid')
+            nsteps = values_data.size
+            fillarray = np.zeros(nsteps)
+            fillarray[np.array(plot_states_barrier_filter_list[idx], dtype=np.int64)] = 1
+            ax_v.fill_between(x_times, 0.0, 1.2, 
+                                     where=fillarray, color='b', alpha=0.3)
+            ax_v.plot(x_times, 0*x_times, 'k--', linewidth=1.0)
+
+    ax_v.set_xticks(ticks=[0, round(dt*maxsteps, 2)], labels=[0, round(dt*maxsteps, 2)], fontsize=legend_fontsize)
+    ax_v.set_yticks(ticks=[0, 1.2], 
+                        labels=[0, 1.2], 
+                        fontsize=legend_fontsize)
+    ax_v.set_ylim([0, 1.2])
+    ax_v.yaxis.set_label_coords(-0.04, 0.5)
+    ax_v.xaxis.set_label_coords(0.5, -0.04)
+    ax_v.set_xlabel('Time (s)', 
+                        fontsize=legend_fontsize)
+    ax_v.set_ylabel('Value function', 
+                        fontsize=legend_fontsize)
+        
+    fig_v.savefig(
+            plot_folder + tag + str(hide_label) + "_jax_values.pdf", dpi=200, 
+            bbox_inches='tight', transparent=hide_label
+        )
+    fig_v.savefig(
+            plot_folder + tag + str(hide_label) + "_jax_values.png", dpi=200, 
+            bbox_inches='tight', transparent=hide_label
+        )
+
 
     print("Reporting stats")
     for idx, controls_data in enumerate(plot_actions_list):
         print("Type: ", labellist[idx])
-        jerklist = find_jerk(controls_data)
+        jerklist = find_jerk(controls_data, dt)
         timelist = plot_times_list[idx]
         print("Acceleration jerk: ", jerklist[0], " +- ", jerklist[2])
         print("Steer jerk: ", jerklist[1], " +- ", jerklist[3])

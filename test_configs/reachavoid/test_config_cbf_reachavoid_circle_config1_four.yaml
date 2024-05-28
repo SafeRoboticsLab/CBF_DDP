@@ -20,7 +20,9 @@ environment:
     - [0., 8.0]
     - [-0.4, 0.4]
     - [0.5, 1.5]
+    - [0.5, 1.5]
     - [-0.3, 0.3]
+    - [-0.15, 0.15]
     - [-0.15, 0.15]
 
 cost:
@@ -47,21 +49,25 @@ cost:
   USE_DELTA: false
   COST_TYPE: Reachavoid
   # SAFETY COST PARAM
-  W_ACCEL: 0.00001
-  W_OMEGA: 0.00001
+  W_ACCEL: 0.0001
+  W_OMEGA: 0.0001
   YAW_MIN: -1.57
   YAW_MAX: 1.57
 
 agent:
   AGENT_ID: ego
-  DYN: Bicycle5D
+  DYN: TwoWheel7D
   FOOTPRINT: Circle
   EGO_RADIUS: 0.1
   ACTION_RANGE:
     - [-0.5, 0.5]
+    - [-0.5, 0.5]
+    - [-1.0, 1.0]
     - [-1.0, 1.0]
   WEIGHT : 2.99  # kg
   # CAR DYNAMICS
+  lf: 0.1
+  lr: 0.1
   WHEELBASE: 0.2
   DT: 0.05
   DELTA_MIN: -1.2  # rad
@@ -71,7 +77,7 @@ agent:
   V_MAX: 2.0
 
 solver:
-  INIT_STATE: [0.0, 0.0, 0.6, 0.0, 0.0]
+  INIT_STATE: [0.0, 0.0, 0.6, 0.6, 0.0, 0.0, 0.0]
   N: 45
   MAX_ITER: 20
   MAX_ITER_RECEDING: 360
@@ -79,10 +85,10 @@ solver:
   LINE_SEARCH: 'baseline'
   # Shielding options: 'none', 'LR', 'CBF'
   FILTER_TYPE: 'CBF'
-  CBF_TYPE: 'quadratic'
+  CBF_TYPE: 'linear'
   BARRIER_GAMMA: 0.9
   LR_THRESHOLD: 0.0
-  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config1/
+  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config1_4wheel/
   DEVICE: cpu
   FIG_SIZE_X: 8
   FIG_SIZE_Y: 2.5

@@ -2,7 +2,7 @@ environment:
   SEED: 0
   NUM_AGENTS: 1
   # TRACK
-  TRACK_LEN: 10
+  TRACK_LEN: 3
   # LOOP: true
   TIMEOUT: 100
   # DONE FLAG PARAM
@@ -10,11 +10,11 @@ environment:
   G_X_FAIL: 0.0
   OBSC_TYPE: circle
   OBS_SPEC:
-    - [2.5, 0.0, 0.25]
-    - [4.5, 0.0, 0.25]
+  #  - [1.5, 0.4, 0.35]
+    - [4.5, -0.4, 0.35]
     - [6.5, 0.0, 0.25]
-    - [8.5, 0.7, 0.25]
-    - [8.5, -0.7, 0.25]
+  #  - [8.5, 0.7, 0.25]
+  #  - [8.5, -0.7, 0.25]
   #  - [11.0, 0.1, 0.35]
   RESET_SPACE:
     - [0., 8.0]
@@ -27,7 +27,7 @@ cost:
   # Task policy tuned weights
   WT_ACCEL: 0.01
   WT_OMEGA: 0.01
-  W_TRACK: 0.01
+  W_TRACK: 0.0001
   W_VEL: 0.01
   YAWT_MIN: -1.2
   YAWT_MAX: 1.2
@@ -47,8 +47,8 @@ cost:
   USE_DELTA: false
   COST_TYPE: Reachavoid
   # SAFETY COST PARAM
-  W_ACCEL: 0.00001
-  W_OMEGA: 0.00001
+  W_ACCEL: 0.000001
+  W_OMEGA: 0.000001
   YAW_MIN: -1.57
   YAW_MAX: 1.57
 
@@ -71,7 +71,7 @@ agent:
   V_MAX: 2.0
 
 solver:
-  INIT_STATE: [0.0, 0.0, 0.6, 0.0, 0.0]
+  INIT_STATE: [0.0, 0.6, 0.6, 0.7, 0.0]
   N: 45
   MAX_ITER: 20
   MAX_ITER_RECEDING: 360
@@ -82,7 +82,7 @@ solver:
   CBF_TYPE: 'quadratic'
   BARRIER_GAMMA: 0.9
   LR_THRESHOLD: 0.0
-  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config1/
+  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config_easy_road/
   DEVICE: cpu
   FIG_SIZE_X: 8
   FIG_SIZE_Y: 2.5
