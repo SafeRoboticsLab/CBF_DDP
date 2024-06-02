@@ -207,11 +207,13 @@ class BaseSingleEnv(BaseEnv):
         state_history.append(self.state)
 
         prev_sol = None
+        prev_action = np.array([0.0, 0.0])
         for t in range(T_rollout):
             #kwargs['state'] = self.state.copy()
             action, solver_info = self.agent.get_action(
-                obs=obs, controls=controls_initialize, prev_sol=prev_sol, state=self.state
+                obs=obs, controls=controls_initialize, prev_sol=prev_sol, state=self.state, prev_action=prev_action
             )
+            prev_action = np.array( action )
             prev_sol = solver_info
 
             if solver_info['mark_barrier_filter']:

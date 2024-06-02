@@ -60,7 +60,7 @@ class iLQRSafetyFilter(iLQR):
 
     def get_action(
         self, obs: np.ndarray, controls: Optional[np.ndarray] = None,
-        prev_sol: Optional[Dict] = None, warmup=False, **kwargs
+        prev_sol: Optional[Dict] = None, prev_action:np.ndarray = np.array([0.0, 0.0]), warmup=False, **kwargs
     ) -> np.ndarray:
 
         # Linear feedback policy
@@ -156,7 +156,7 @@ class iLQRSafetyFilter(iLQR):
 
             solver_initial = np.zeros((2,))
             if prev_sol is not None:
-                solver_initial = prev_sol['qcqp_initialize']
+                solver_initial = np.array(prev_action - control_cbf_cand)
 
             # Define initial state and initial performance policy
             initial_state_jnp = jnp.array(initial_state[:, np.newaxis])
@@ -215,6 +215,7 @@ class iLQRSafetyFilter(iLQR):
 
                 # Restart from current point and run again
                 control_cbf_cand = np.array(filtered_control)
+                solver_initial = np.array(prev_action - control_cbf_cand)
 
                 state_imaginary, control_cbf_cand = self.dyn.integrate_forward(
                     state=initial_state, control=control_cbf_cand
