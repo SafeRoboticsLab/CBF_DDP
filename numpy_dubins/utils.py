@@ -2,7 +2,6 @@ import numpy as np
 
 import cvxpy as cp
 from cvxpy import SolverError
-import scipy
 
 
 def unroll_task_policy(initial_obs, plan_env, task_policy, horizon):

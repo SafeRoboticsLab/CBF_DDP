@@ -8,7 +8,7 @@ from utils import unroll_task_policy, barrier_filter_quadratic
 from plotting.plotting import helper_plot
 
 
-def run_barrier_ilq(
+def run_control_barrier_ilq(
         env,
         marginFunc,
         horizon,
@@ -23,7 +23,7 @@ def run_barrier_ilq(
         plot_folder="./",
         animate=False):
     """
-    Barrier filtering with iLQ
+    Control Barrier filtering with iLQ
     """
     plan_env_1 = copy.deepcopy(env)
     plan_env_2 = copy.deepcopy(env)
@@ -32,11 +32,11 @@ def run_barrier_ilq(
     current_horizon = horizon
     run_env_obs = run_env.reset()
 
-    states_ilq = np.zeros((max_steps, plan_env_1.state_dim))
-    controls_ilq = np.zeros((max_steps, plan_env_2.action_dim))
-    deviations_ilq = np.zeros((max_steps, plan_env_2.action_dim))
-    safe_controls_ilq = np.zeros((max_steps, plan_env_1.action_dim))
-    values_ilq = np.zeros((max_steps, ))
+    states_cbf_ilq = np.zeros((max_steps, plan_env_1.state_dim))
+    controls_cbf_ilq = np.zeros((max_steps, plan_env_2.action_dim))
+    deviations_cbf_ilq = np.zeros((max_steps, plan_env_2.action_dim))
+    optimal_safe_controls_ilq = np.zeros((max_steps, plan_env_1.action_dim))
+    optimal_values_ilq = np.zeros((max_steps, ))
     types_ilq = np.zeros((max_steps, ))
     process_times = np.zeros((max_steps, ))
     barrier_entries_ilq = np.zeros((max_steps, ))
@@ -73,7 +73,7 @@ def run_barrier_ilq(
         # Run first trajectory optimization
         control_safe_1, solver_dict_plan_1, _ = lq_policy_1.get_action(
             np.array(run_env_obs), initial_controls=reinit_controls)
-        safe_controls_ilq[time_step] = control_safe_1
+        optimal_safe_controls_ilq[time_step] = control_safe_1
 
         # Run one counterfactual step with task policy
         control_perf = task_policy(plan_env_1, run_env_obs)
@@ -104,7 +104,7 @@ def run_barrier_ilq(
             solver_dict_plan_2['title'] = 'Barrier filtering'
             solver_dict_plan_2['trace_label'] = "CBF-DDP" + \
                 "($\\gamma$=" + str(gamma) + ")"
-            solver_dict_plan_2['previous_trace'] = states_ilq[0:time_step]
+            solver_dict_plan_2['previous_trace'] = states_cbf_ilq[0:time_step]
             solver_dict_plan_2['run_steps'] = solver_dict_plan_2['states'].shape[0]
             solver_dict_plan_2['task_trace'] = unroll_task_policy(
                 run_env_obs, copy.deepcopy(plan_env_1), task_policy, horizon=current_horizon)
@@ -168,7 +168,7 @@ def run_barrier_ilq(
             barrier_process_time = time.time() - barrier_start_time
 
         print(
-            "[{}]: solver 1 returns margin {:.3f} and uses {:.3f}, solver 2 returns margin {:.3f} and uses {:.3f}.".format(
+            "[{}]: solver 1 returns margin {:.3f} and uses {:.3f}s, solver 2 returns margin {:.3f} and uses {:.3f}s.".format(
                 time_step,
                 solver_dict_plan_1['margin'],
                 solver_dict_plan_1['t_process'],
@@ -192,19 +192,19 @@ def run_barrier_ilq(
                 barrier_filter_steps = barrier_filter_steps + 1
                 types_ilq[time_step] = 2
 
-        run_env_obs, control_clip = run_env.step(run_env_obs, filtered_control)
+        run_env_obs, filtered_control_clip = run_env.step(run_env_obs, filtered_control)
 
-        states_ilq[time_step] = np.array(run_env_obs)
-        safe_controls_ilq[time_step] = control_safe_1
-        controls_ilq[time_step] = np.array(control_clip)
-        values_ilq[time_step] = solver_dict_plan_1['margin']
+        states_cbf_ilq[time_step] = np.array(run_env_obs)
+        optimal_safe_controls_ilq[time_step] = control_safe_1
+        controls_cbf_ilq[time_step] = np.array(filtered_control_clip)
+        optimal_values_ilq[time_step] = solver_dict_plan_1['margin']
         process_times[time_step] = barrier_process_time
         barrier_entries_ilq[time_step] = barrier_entries
         barrier_margins[time_step] = constraint_violation
-        deviations_ilq[time_step] = control_clip - control_perf
+        deviations_cbf_ilq[time_step] = filtered_control_clip - control_perf
 
         print(
-            "[{}]: Total barrier solver and uses {:.3f}.".format(
+            "[{}]: Total barrier solver and uses {:.3f}s.".format(
                 time_step,
                 barrier_process_time))
 
@@ -213,15 +213,15 @@ def run_barrier_ilq(
         #    break
 
     solver_dict = {
-        "states": states_ilq,
-        "controls": controls_ilq,
-        "safe_controls": safe_controls_ilq,
-        "values": values_ilq,
+        "states": states_cbf_ilq,
+        "controls": controls_cbf_ilq,
+        "safe_controls": optimal_safe_controls_ilq,
+        "values": optimal_values_ilq,
         "types": types_ilq,
         "id": "Barrier",
         "task_trace": None,
         "task_active": False,
-        "controls_deviation": deviations_ilq,
+        "controls_deviation": deviations_cbf_ilq,
         "status": 1,
         "label": "CBF-DDP",
         "barrier_filter": barrier_filter_steps,

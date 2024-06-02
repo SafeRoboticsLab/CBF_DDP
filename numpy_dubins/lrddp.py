@@ -14,10 +14,8 @@ def run_lr_ilq(
         horizon,
         max_steps,
         threshold=0.,
-        seed=None,
         policy_type="Reachability",
         task_policy=None,
-        barrier_tol=-5e-4,
         Rc=1e-3,
         plot_folder="./",
         animate=False):
@@ -31,11 +29,11 @@ def run_lr_ilq(
     current_horizon = horizon
     run_env_obs = run_env.reset()
 
-    states_ilq = np.zeros((max_steps, plan_env_1.state_dim))
-    controls_ilq = np.zeros((max_steps, plan_env_2.action_dim))
-    safe_controls_ilq = np.zeros((max_steps, plan_env_1.action_dim))
-    deviations_ilq = np.zeros((max_steps, plan_env_1.action_dim))
-    values_ilq = np.zeros((max_steps, ))
+    states_lr_ilq = np.zeros((max_steps, plan_env_1.state_dim))
+    controls_lr_ilq = np.zeros((max_steps, plan_env_2.action_dim))
+    optimal_safe_controls_ilq = np.zeros((max_steps, plan_env_1.action_dim))
+    deviations_lr_ilq = np.zeros((max_steps, plan_env_1.action_dim))
+    optimal_values_ilq = np.zeros((max_steps, ))
     types_ilq = np.zeros((max_steps, ))
     process_times = np.zeros((max_steps, ))
 
@@ -74,7 +72,7 @@ def run_lr_ilq(
 
         control_perf = task_policy(plan_env_1, run_env_obs)
 
-        safe_controls_ilq[time_step] = control_safe_1
+        optimal_safe_controls_ilq[time_step] = control_safe_1
 
         imag_obs, control_perf = plan_env_2.step(run_env_obs, control_perf)
 
@@ -107,7 +105,7 @@ def run_lr_ilq(
             solver_dict_plan_1['trace_id'] = 'LR'
             solver_dict_plan_1['trace_label'] = 'LR-DDP' + \
                 '($\\epsilon$=' + str(threshold) + ')'
-            solver_dict_plan_1['previous_trace'] = states_ilq[0:time_step]
+            solver_dict_plan_1['previous_trace'] = states_lr_ilq[0:time_step]
             solver_dict_plan_1['run_steps'] = solver_dict_plan_2['states'].shape[0]
             solver_dict_plan_1['task_trace'] = unroll_task_policy(
                 run_env_obs, copy.deepcopy(plan_env_1), task_policy, horizon=current_horizon)
@@ -124,23 +122,23 @@ def run_lr_ilq(
                 ego_radius=env.ego_radius,
                 animate=True)
 
-        run_env_obs, control_clip = run_env.step(run_env_obs, control)
+        run_env_obs, filtered_control_clip = run_env.step(run_env_obs, control)
 
         process_times[time_step] = time.time() - start_time
-        states_ilq[time_step] = np.array(run_env_obs)
-        safe_controls_ilq[time_step] = control_safe_1
-        controls_ilq[time_step] = np.array(control_clip)
-        values_ilq[time_step] = solver_dict_plan_1['margin']
+        states_lr_ilq[time_step] = np.array(run_env_obs)
+        optimal_safe_controls_ilq[time_step] = control_safe_1
+        controls_lr_ilq[time_step] = np.array(filtered_control_clip)
+        optimal_values_ilq[time_step] = solver_dict_plan_1['margin']
 
-        deviations_ilq[time_step] = control_clip - control_perf
+        deviations_lr_ilq[time_step] = filtered_control_clip - control_perf
 
     solver_dict = {
-        "states": states_ilq,
+        "states": states_lr_ilq,
         "run_steps": time_step + 1,
-        "controls": controls_ilq,
-        "controls_deviation": deviations_ilq,
-        "safe_controls": safe_controls_ilq,
-        "values": values_ilq,
+        "controls": controls_lr_ilq,
+        "controls_deviation": deviations_lr_ilq,
+        "optimal_safe_controls": optimal_safe_controls_ilq,
+        "optimal_values": optimal_values_ilq,
         "id": "LR",
         "task_trace": None,
         "task_active": False,

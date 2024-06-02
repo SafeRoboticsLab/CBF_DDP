@@ -6,7 +6,7 @@ import os
 
 from costFunc.reachabilityFunc import ReachabilityMarginFunction3D
 from dynamics import Dubins
-from cbfddp import run_barrier_ilq
+from cbfddp import run_control_barrier_ilq
 from lrddp import run_lr_ilq
 from plotting.plotting import helper_plot, make_animation, plot_dubins_trajectory
 
@@ -82,6 +82,8 @@ def run_heuristic_cbf(run_env, task_policy, marginFunc, max_steps):
 
     return solver_dict
 
+if not os.path.exists("./dubins_plots_animate/"):
+    os.mkdir("./dubins_plots_animate/")
 
 obstacle_list = np.array([[0.0, 1.0]])
 obstacle_radius = np.array([1.0])
@@ -126,7 +128,7 @@ if run:
             "./dubins_plots_animate/hcbf.pkl",
             "wb"))
 
-    solver_dict_barrier_1 = run_barrier_ilq(
+    solver_dict_barrier_1 = run_control_barrier_ilq(
         env,
         marginFunc,
         horizon,

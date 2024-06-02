@@ -152,7 +152,7 @@ class iLQRSafetyFilter(iLQR):
             gamma = self.gamma
             cutoff = gamma * solver_info_0['Vopt']
 
-            initial_control = task_ctrl
+            control_cbf_cand = task_ctrl
 
             solver_initial = np.zeros((2,))
             if prev_sol is not None:
@@ -160,7 +160,7 @@ class iLQRSafetyFilter(iLQR):
 
             # Define initial state and initial performance policy
             initial_state_jnp = jnp.array(initial_state[:, np.newaxis])
-            initial_control_jnp = jnp.array(initial_control[:, np.newaxis])
+            control_cbf_cand_jnp = jnp.array(control_cbf_cand[:, np.newaxis])
             num_iters = 0
 
             # Setting tolerance to zero does not cause big improvements at the
@@ -185,7 +185,7 @@ class iLQRSafetyFilter(iLQR):
                 # Extract information from solver for enforcing constraint
                 grad_x = jnp.array(solver_info_1['grad_x'])
                 _, B0 = self.dyn.get_jacobian(
-                    initial_state_jnp, initial_control_jnp)
+                    initial_state_jnp, control_cbf_cand_jnp)
 
                 if self.constraint_type == 'quadratic':
                     grad_xx = np.array(solver_info_1['grad_xx'])
@@ -201,8 +201,8 @@ class iLQRSafetyFilter(iLQR):
                     P = 0.5 * (P + P.T)
                     p = grad_x.T @ B0u
                     # Controls improvement direction
-                    # limits = np.array( [[self.dyn.ctrl_space[0, 0] - initial_control[0], self.dyn.ctrl_space[0, 1] - initial_control[0]],
-                    #          [self.dyn.ctrl_space[1, 0] - initial_control[1], self.dyn.ctrl_space[1, 1] - initial_control[1]]] )
+                    # limits = np.array( [[self.dyn.ctrl_space[0, 0] - control_cbf_cand[0], self.dyn.ctrl_space[0, 1] - control_cbf_cand[0]],
+                    #          [self.dyn.ctrl_space[1, 0] - control_cbf_cand[1], self.dyn.ctrl_space[1, 1] - control_cbf_cand[1]]] )
                     control_correction = barrier_filter_quadratic(
                         P, p, scaled_c, initialize=solver_initial, control_bias_term=control_bias_term)
                 elif self.constraint_type == 'linear':
@@ -210,14 +210,14 @@ class iLQRSafetyFilter(iLQR):
                         grad_x, B0, scaled_c)
 
                 control_bias_term = control_bias_term + control_correction
-                filtered_control = initial_control + \
+                filtered_control = control_cbf_cand + \
                     np.array(control_correction)
 
                 # Restart from current point and run again
-                initial_control = np.array(filtered_control)
+                control_cbf_cand = np.array(filtered_control)
 
-                state_imaginary, initial_control = self.dyn.integrate_forward(
-                    state=initial_state, control=initial_control
+                state_imaginary, control_cbf_cand = self.dyn.integrate_forward(
+                    state=initial_state, control=control_cbf_cand
                 )
                 kwargs['state'] = np.array(state_imaginary)
                 _, solver_info_1 = self.solver_2.get_action(state_imaginary,
@@ -228,7 +228,7 @@ class iLQRSafetyFilter(iLQR):
                 solver_info_0['marginopt_next'] = solver_info_1['marginopt']
                 solver_info_0['is_inside_target_next'] = solver_info_1['is_inside_target']
 
-                initial_control_jnp = jnp.array(initial_control[:, np.newaxis])
+                control_cbf_cand_jnp = jnp.array(control_cbf_cand[:, np.newaxis])
 
                 # CBF constraint violation
                 constraint_violation = solver_info_1['Vopt'] - cutoff
@@ -250,9 +250,9 @@ class iLQRSafetyFilter(iLQR):
                 #solver_info_0['reinit_J'] = solver_info_1['Vopt']
                 solver_info_0['num_iters'] = num_iters
                 solver_info_0['deviation'] = np.linalg.norm(
-                    initial_control - task_ctrl, ord=1)
-                solver_info_0['qcqp_initialize'] = initial_control - task_ctrl
-                return initial_control.ravel(), solver_info_0
+                    control_cbf_cand - task_ctrl, ord=1)
+                solver_info_0['qcqp_initialize'] = control_cbf_cand - task_ctrl
+                return control_cbf_cand.ravel(), solver_info_0
 
         self.filter_steps += 1
         # Safe policy
