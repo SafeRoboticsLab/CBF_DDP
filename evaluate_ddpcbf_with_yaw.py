@@ -26,6 +26,7 @@ jax.config.update('jax_platform_name', 'cpu')
 
 
 def main(config_file, plot_tag, road_boundary, is_task_ilqr):
+    ## ------------------------------------- Warmup fields ------------------------------------------ ##
     config = load_config(config_file)
     config_env = config['environment']
     config_agent = config['agent']
@@ -103,7 +104,8 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
     # Warms up jit
     env.agent.policy.get_action(obs=x_cur, state=x_cur, warmup=True)
     env.report()
-
+    ## ------------------------------------ Evaluation starts -------------------------------------------
+    # Callback after each timestep for plotting and summarizing evaluation
     def rollout_step_callback(
             env: CarSingle5DEnv,
             state_history,
@@ -138,7 +140,8 @@ def main(config_file, plot_tag, road_boundary, is_task_ilqr):
                     solver_info['marginopt'],
                     solver_info['marginopt_next'],
                     solver_info['process_time']))
-
+    
+    # Callback after episode for plotting and summarizing evaluation
     def rollout_episode_callback(
             env,
             state_history,

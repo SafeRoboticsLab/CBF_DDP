@@ -82,7 +82,7 @@ solver:
   CBF_TYPE: 'quadratic'
   BARRIER_GAMMA: 0.92
   LR_THRESHOLD: 0.0
-  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config_easy/
+  OUT_FOLDER: exps_may/ilqr/bic5D/reachavoid_yaw_experiment_config_slow/
   DEVICE: cpu
   FIG_SIZE_X: 8
   FIG_SIZE_Y: 2.5
