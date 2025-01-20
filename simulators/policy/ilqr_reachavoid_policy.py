@@ -70,11 +70,9 @@ class iLQRReachAvoid(iLQR):
             )
 
             # Choose the best alpha scaling using appropriate line search methods
-            #alpha_chosen = self.baseline_line_search( states, controls, K_closed_loop, k_open_loop, J)
+            alpha_chosen = self.baseline_line_search( states, controls, K_closed_loop, k_open_loop, J)
             # alpha_chosen = self.armijo_line_search( states=states, controls=controls, Ks1=K_closed_loop, ks1=k_open_loop, critical=critical,
             #                                       J=J, c_u=c_u)
-            alpha_chosen = self.trust_region_search_conservative(states=states, controls=controls, Ks1=K_closed_loop, ks1=k_open_loop, critical=critical,
-                                                                 J=J, c_x=c_x, c_xx=c_xx)
 
             #states, controls, J_new, critical, failure_margins, target_margins, reachavoid_margin, _, _, _, _ = self.forward_pass(states, controls, K_closed_loop, k_open_loop, alpha_chosen)
             states, controls, J_new, critical, failure_margins, target_margins, reachavoid_margin, c_x_t, c_xx_t, c_u_t, c_uu_t = self.forward_pass(
@@ -118,7 +116,7 @@ class iLQRReachAvoid(iLQR):
         def run_forward_pass(args):
             states, controls, K_closed_loop, k_open_loop, alpha, J, J_new = args
             alpha = beta * alpha
-            _, _, J_new, _, _, _, _ = self.forward_pass(
+            _, _, J_new, _, _, _, _, _, _, _, _ = self.forward_pass(
                 states, controls, K_closed_loop, k_open_loop, alpha)
             return states, controls, K_closed_loop, k_open_loop, alpha, J, J_new
 
@@ -169,80 +167,6 @@ class iLQRReachAvoid(iLQR):
 
         states, controls, Ks1, ks1, alpha, J, t_star, J_new, deltat = jax.lax.while_loop(check_continue, run_forward_pass, (states, controls,
                                                                                                                             Ks1, ks1, alpha, J, t_star, J_new, deltat))
-        return alpha
-
-    @partial(jax.jit, static_argnames='self')
-    def trust_region_search_conservative(self, states, controls, Ks1, ks1, J, critical,
-                                         c_x, c_xx, alpha_init=1.0, beta=0.8):
-        alpha = alpha_init
-        J_new = -jnp.inf
-        t_star = jnp.where(critical != 0, size=self.N - 1)[0][0]
-
-        self.margin = 2
-        traj_diff = 0.2
-        cost_error = 1.0
-        old_cost_error = 2.0
-        rho = 0.5
-
-        @jax.jit
-        def decrease_margin(args):
-            self.margin = 0.75 * self.margin
-            return args
-
-        @jax.jit
-        def increase_margin(args):
-            self.margin = 1.4 * self.margin
-            return args
-
-        @jax.jit
-        def fix_margin(args):
-            return args
-
-        @jax.jit
-        def increase_or_fix_margin(args):
-            cost_error, old_cost_error, traj_diff, rho = args
-            _, _ = jax.lax.cond(jnp.logical_and(jnp.abs(traj_diff - self.margin) < 0.01, rho > 0.75), increase_margin,
-                                fix_margin, (cost_error, old_cost_error))
-            return cost_error, old_cost_error, traj_diff, rho
-
-        @jax.jit
-        def run_forward_pass(args):
-            states, controls, Ks1, ks1, alpha, J, t_star, J_new, traj_diff, cost_error, old_cost_error, rho = args
-            alpha = beta * alpha
-            X, _, J_new, _, _, _, _, _, _, _, _ = self.forward_pass(nominal_states=states, nominal_controls=controls,
-                                                                    K_closed_loop=Ks1, k_open_loop=ks1, alpha=alpha)
-
-            traj_diff = jnp.max(jnp.array([jnp.linalg.norm(x_new - x_old)
-                                for x_new, x_old in zip(X[:2, :], states[:2, :])]))
-
-            x_diff = X[:, t_star] - states[:, t_star]
-
-            delta_cost_quadratic_approx = 0.5 * \
-                (x_diff @ c_xx[:, :, t_star] + 2 * c_x[:, t_star]) @ x_diff
-            delta_cost_actual = J_new - J
-            old_cost_error = jnp.abs(cost_error)
-            cost_error = jnp.abs(
-                delta_cost_quadratic_approx -
-                delta_cost_actual)
-            rho = delta_cost_actual / delta_cost_quadratic_approx
-            return states, controls, Ks1, ks1, alpha, J, t_star, J_new, traj_diff, cost_error, old_cost_error, rho
-
-        @jax.jit
-        def check_continue(args):
-            _, _, _, _, alpha, J, _, J_new, traj_diff, cost_error, old_cost_error, rho = args
-            trust_region_violation = (traj_diff > self.margin)
-            improvement_violation = (J_new < J)
-
-            cost_error, old_cost_error, traj_diff, rho = jax.lax.cond((rho <= 0.25), decrease_margin,
-                                                                      increase_or_fix_margin, (cost_error, old_cost_error, traj_diff, rho))
-            return jnp.logical_and(alpha > self.min_alpha, jnp.logical_or(
-                trust_region_violation, improvement_violation))
-
-        states, controls, Ks1, ks1, alpha, J, t_star, J_new, traj_diff, cost_error, _, _ = (
-            jax.lax.while_loop(check_continue, run_forward_pass, (states, controls,
-                                                                  Ks1, ks1, alpha, J, t_star, J_new,
-                                                                  traj_diff, cost_error, old_cost_error, rho)))
-        #print("Margin", self.margin)
         return alpha
 
     @partial(jax.jit, static_argnames='self')
