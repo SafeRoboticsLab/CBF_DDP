@@ -135,7 +135,7 @@ class Bicycle5D(BaseDynamics):
                          obs[2] / (1e-6 + self.wheelbase * jnp.cos(obs[4])**2)],
                         [0, 0, 0, 0, 0]])
 
-        Bc = np.array([[0, 0],
+        Bc = jnp.array([[0, 0],
                        [0, 0],
                        [1, 0],
                        [0, 0],
@@ -169,7 +169,7 @@ class Bicycle5D(BaseDynamics):
                          obs[2] / (1e-6 + self.wheelbase * jnp.cos(obs[4])**2)],
                         [0, 0, 0, 0, 0]])
 
-        Bc = np.array([[0, 0],
+        Bc = jnp.array([[0, 0],
                        [0, 0],
                        [1, 0],
                        [0, 0],
