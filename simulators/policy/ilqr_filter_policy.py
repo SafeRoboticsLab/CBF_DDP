@@ -9,8 +9,8 @@ import numpy as np
 from .ilqr_reachavoid_policy import iLQRReachAvoid
 from .ilqr_policy import iLQR
 from .solver_utils import barrier_filter_linear, barrier_filter_quadratic, bicycle_linear_task_policy
-from simulators.dynamics.base_dynamics import BaseDynamics
-from simulators.costs.base_margin import BaseMargin
+from ..dynamics.base_dynamics import BaseDynamics
+from ..costs.base_margin import BaseMargin
 
 class iLQRSafetyFilter(iLQR):
 
@@ -156,7 +156,7 @@ class iLQRSafetyFilter(iLQR):
 
             solver_initial = np.zeros((2,))
             if prev_sol is not None:
-                solver_initial = np.array(prev_action - control_cbf_cand)
+                solver_initial = prev_sol['qcqp_initialize']
 
             # Define initial state and initial performance policy
             initial_state_jnp = jnp.array(initial_state[:, np.newaxis])
@@ -215,7 +215,7 @@ class iLQRSafetyFilter(iLQR):
 
                 # Restart from current point and run again
                 control_cbf_cand = np.array(filtered_control)
-                solver_initial = np.array(prev_action - control_cbf_cand)
+                #solver_initial = np.array(prev_action - control_cbf_cand)
 
                 state_imaginary, control_cbf_cand = self.dyn.integrate_forward(
                     state=initial_state, control=control_cbf_cand
