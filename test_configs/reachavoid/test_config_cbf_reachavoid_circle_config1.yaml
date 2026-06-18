@@ -47,8 +47,8 @@ cost:
   USE_DELTA: false
   COST_TYPE: Reachavoid
   # SAFETY COST PARAM
-  W_ACCEL: 0.00001
-  W_OMEGA: 0.00001
+  W_ACCEL: 0.0001
+  W_OMEGA: 0.0001
   YAW_MIN: -1.57
   YAW_MAX: 1.57
 
