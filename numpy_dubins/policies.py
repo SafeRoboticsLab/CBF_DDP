@@ -242,8 +242,7 @@ class ReachabilityLQPolicy:
 
             convergence_sequence.append(critical_margin)
 
-            # Small improvement.
-            if J_new > 0 and np.abs((J_new - J) / J) < self.tol:
+            if np.abs((J_new-J) / J) < self.tol:  # Small improvement.
                 converged = True
             J = J_new
 

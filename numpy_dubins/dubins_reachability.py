@@ -98,8 +98,8 @@ barrier_tol = -1e-5
 barrier_scaling = 1.4
 ego_radius = 0.15
 
-plot_folder = "./dubins_plots_animate/"
-env = Dubins(theta_limit)
+plot_folder = "/Users/athindranrameshkumar/Documents/Code/CBF_DDP/numpy_dubins/dubins_plots_animate/"
+env = Dubins( theta_limit )
 env.xlimits = [-3.5, 2.0]
 env.ylimits = [-1.0, 3.5]
 env.road_boundary = None
@@ -210,11 +210,9 @@ if plotting:
                            show_label=show_label,
                            legend_fontsize=10)
 
-# plt.tight_layout()
-ax[0].set_yticks(ticks=np.array([-1.5, 3.0]),
-                 labels=np.array([-1.5, 3.0]), fontsize=10)
-ax[0].set_xticks(ticks=np.array([-3.5, 2.0]),
-                 labels=np.array([-3.5, 2.0]), fontsize=10)
+#plt.tight_layout()
+ax[0].set_yticks(np.array([-1.5, 3.0]))
+ax[0].set_xticks(np.array([-3.5, 2.0]))
 ax[0].tick_params(axis='both', labelsize=10)
 ax[0].set_ylim([-1.5, 3.0])
 ax[0].set_xlim([-3.5, 2.0])
@@ -239,24 +237,21 @@ ax[0].yaxis.set_label_coords(-0.05, 0.5)
 ax[0].xaxis.set_label_coords(.5, -.05)
 # ax[0].set_aspect('equal')
 
-ax[1].plot(solver_dict_lr_1["controls_deviation"][:, 0],
-           linewidth=1, color='r', linestyle='dashed')
-ax[1].plot(solver_dict_hcbf["controls_deviation"][:, 0],
-           linewidth=1, color='m', linestyle='solid')
-ax[1].plot(solver_dict_barrier_1["controls_deviation"][:, 0],
-           linewidth=1, color='b', linestyle='dashdot')
+ax[1].plot(np.arange(0, solver_dict_lr_1["controls_deviation"].shape[0])*env.dt, solver_dict_lr_1["controls_deviation"][:, 0], linewidth=1, color='r', linestyle='dashed')
+ax[1].plot(np.arange(0, solver_dict_hcbf["controls_deviation"].shape[0])*env.dt, solver_dict_hcbf["controls_deviation"][:, 0], linewidth=1, color='m', linestyle='solid')
+ax[1].plot(np.arange(0, solver_dict_barrier_1["controls_deviation"].shape[0])*env.dt, solver_dict_barrier_1["controls_deviation"][:, 0], linewidth=1, color='b', linestyle='dashdot')
 
 ax[1].xaxis.set_label_coords(.5, -.05)
 ax[1].yaxis.set_label_coords(-0.05, 0.5)
 ax[1].tick_params("both", labelsize=10)
-ax[1].set_yticks(ticks=[0, 2], labels=[0, 2])
-ax[1].set_xticks(ticks=[0, 150], labels=[0, 150])
-ax[1].set_xlim([0, 150])
+ax[1].set_yticks([0, 2])
+ax[1].set_xticks([0, 8.0])
+ax[1].set_xlim([0, 8.0])
 ax[1].set_ylim([0, 2.2])
 
 if show_label:
     ax[1].set_ylabel("Control deviation", fontsize=10)
-    ax[1].set_xlabel("Time step", fontsize=10)
+    ax[1].set_xlabel("Time (s)", fontsize=10)
 else:
     ax[1].set_xticklabels([])
     ax[1].set_yticklabels([])
