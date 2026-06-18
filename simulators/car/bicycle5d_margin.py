@@ -1,7 +1,7 @@
 from typing import Dict
 from functools import partial
 
-from jaxlib.xla_extension import DeviceArray
+from jax import Array as DeviceArray
 import jax.numpy as jnp
 import jax
 
