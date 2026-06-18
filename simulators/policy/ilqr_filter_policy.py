@@ -183,7 +183,7 @@ class iLQRSafetyFilter(iLQR):
                 num_iters = num_iters + 1
 
                 # Extract information from solver for enforcing constraint
-                grad_x = jnp.array(solver_info_1['grad_x'])
+                grad_x = solver_info_1['grad_x']
                 _, B0 = self.dyn.get_jacobian(
                     initial_state_jnp, control_cbf_cand_jnp)
 
@@ -209,7 +209,7 @@ class iLQRSafetyFilter(iLQR):
                     control_correction = barrier_filter_linear(
                         grad_x, B0, scaled_c)
 
-                control_bias_term = control_bias_term + control_correction
+                #control_bias_term = control_bias_term + control_correction
                 filtered_control = control_cbf_cand + \
                     np.array(control_correction)
 
