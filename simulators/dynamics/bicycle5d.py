@@ -116,8 +116,7 @@ class Bicycle5D(BaseDynamics):
                          obs[2] / (1e-6 + self.wheelbase * jnp.cos(obs[4])**2)],
                         [0, 0, 0, 0, 0]])
 
-        Ad = jnp.eye(self.dim_x) + Ac * self.dt + \
-            0.5 * Ac @ Ac * self.dt * self.dt
+        Ad = jnp.eye(self.dim_x) + Ac * self.dt + Ac @ Ac * self.dt * self.dt
 
         return Ad
 
@@ -175,8 +174,7 @@ class Bicycle5D(BaseDynamics):
                        [0, 0],
                        [0, 1]])
 
-        Ad = jnp.eye(self.dim_x) + Ac * self.dt + \
-            0.5 * Ac @ Ac * self.dt * self.dt
+        Ad = jnp.eye(self.dim_x) + Ac * self.dt + Ac @ Ac * self.dt * self.dt
         Bd = self.dt * Bc
 
         return Ad, Bd
