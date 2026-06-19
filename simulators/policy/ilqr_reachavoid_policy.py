@@ -81,6 +81,7 @@ class iLQRReachAvoid(iLQR):
                 states, controls, K_closed_loop, k_open_loop, alpha_chosen)
             if (np.abs((J - J_new) / J) < self.tol):  # Small improvement.
                 status = 1
+                # This check if for adding numerical stability with LR and yaw constraints. Remove if not needed.
                 if J_new > 0:
                     converged = True
 
